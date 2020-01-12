@@ -8,6 +8,7 @@ import reactor.core.publisher.Mono;
 
 //example: https://gitorko.github.io/2019/04/03/Spring-Webflux-R2DBC/
 @RestController
+@RequestMapping("/people")
 public class PersonController {
 
     @Autowired
