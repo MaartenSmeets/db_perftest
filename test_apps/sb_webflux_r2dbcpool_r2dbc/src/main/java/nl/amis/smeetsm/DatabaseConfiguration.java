@@ -22,20 +22,14 @@ import static io.r2dbc.spi.ConnectionFactoryOptions.*;
 @EnableR2dbcRepositories
 class DatabaseConfiguration extends AbstractR2dbcConfiguration {
 
-    @Value("${spring.r2dbc.host}")
-    String host;
-
-    @Value("${spring.r2dbc.port}")
-    Integer port;
-
     @Value("${spring.r2dbc.username}")
     String username;
 
     @Value("${spring.r2dbc.password}")
     String password;
 
-    @Value("${spring.r2dbc.database}")
-    String database;
+    @Value("${spring.r2dbc.url}")
+    String url;
 
     private static final String DB_PROTOCOL = "postgresql";
     private static final String DB_DRIVER = "pool";
@@ -43,6 +37,12 @@ class DatabaseConfiguration extends AbstractR2dbcConfiguration {
 
     @Bean
     public ConnectionFactory connectionFactory() {
+        R2DBCURLSplitter myUrl = new R2DBCURLSplitter(url);
+        System.out.println(myUrl.toString());
+        String host = myUrl.getHost();
+        Integer port = myUrl.getPort();
+        String database = myUrl.getDatabase();
+
         return ConnectionFactories.get(ConnectionFactoryOptions.builder()
                 .option(DRIVER, DB_DRIVER)
                 .option(PROTOCOL, DB_PROTOCOL)
