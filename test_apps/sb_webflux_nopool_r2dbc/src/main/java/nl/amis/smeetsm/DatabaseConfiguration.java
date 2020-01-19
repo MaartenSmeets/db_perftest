@@ -11,9 +11,6 @@ import org.springframework.data.r2dbc.connectionfactory.R2dbcTransactionManager;
 import org.springframework.data.r2dbc.repository.config.EnableR2dbcRepositories;
 import org.springframework.transaction.ReactiveTransactionManager;
 
-import static io.r2dbc.pool.PoolingConnectionFactoryProvider.MAX_SIZE;
-import static io.r2dbc.spi.ConnectionFactoryOptions.*;
-
 //update with https://github.com/Aleksandr-Filichkin/r2dbc-vs-jdbc/blob/master/r2dbc-service/src/main/java/com/filichkin/blog/db/reactive/SubscriptionConfiguration.java
 // https://medium.com/@filia.aleks/r2dbc-vs-jdbc-19ac3c99fafa
 @Configuration
