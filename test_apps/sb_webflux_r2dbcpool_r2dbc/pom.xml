@@ -5,7 +5,7 @@
     <groupId>nl.amis.smeetsm</groupId>
     <artifactId>sb_webflux_r2dbcpool_r2dbc</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>sb_jparest_hikari_jdbc</name>
+    <name>sb_webflux_r2dbcpool_r2dbc</name>
     <description>Spring Boot R2DBC using connection pool</description>
 
     <parent>
