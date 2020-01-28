@@ -9,5 +9,16 @@ CREATE TABLE public.person
 
 TABLESPACE pg_default;
 
-ALTER TABLE public.person
-    OWNER to postgres;
+ALTER TABLE public.person OWNER to postgres;
+
+INSERT INTO public.person (first_name,last_name) values ('Maarten','Smeets');
+INSERT INTO public.person (first_name,last_name) values ('Maarten','Smeets');
+INSERT INTO public.person (first_name,last_name) values ('Maarten','Smeets');
+INSERT INTO public.person (first_name,last_name) values ('Maarten','Smeets');
+INSERT INTO public.person (first_name,last_name) values ('Maarten','Smeets');
+INSERT INTO public.person (first_name,last_name) values ('Maarten','Smeets');
+INSERT INTO public.person (first_name,last_name) values ('Maarten','Smeets');
+INSERT INTO public.person (first_name,last_name) values ('Maarten','Smeets');
+INSERT INTO public.person (first_name,last_name) values ('Maarten','Smeets');
+INSERT INTO public.person (first_name,last_name) values ('Maarten','Smeets');
+COMMIT;
