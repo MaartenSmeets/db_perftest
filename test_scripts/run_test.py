@@ -88,7 +88,7 @@ def exec_all_tests():
     logger.info('Using logfile: ' + resultsfile)
     # write header
     with open(resultsfile, 'a') as the_file:
-        the_file.write('description,driver,pool,servlet_engine,framework,cpus_load,cpus_service,threads,concurrency\n')
+        the_file.write('description,driver,pool,servlet_engine,framework,cpus_load,cpus_service,concurrency\n')
     for jarfile in jarfiles:
         jvmcmd = build_jvmcmd(jarfile.get('filename'));
         jvm_outputline = jarfile.get('description') + ',' + jarfile.get('driver') + ',' + jarfile.get(
@@ -96,11 +96,14 @@ def exec_all_tests():
         logger.info('Processing: ' + jvm_outputline + ' using command: ' + jvmcmd)
         for cpuset_load in cpuset_conf1:
             cpunum_load = str(get_cpu_num(cpuset_load))
-            logger.info('Number of CPUs for load generation' + cpunum_load)
+            logger.info('Number of CPUs for load generation ' + cpunum_load)
+            jvm_outputline = jvm_outputline + ',' + cpunum_load
             for cpuset_service in cpuset_conf2:
                 cpunum_service = str(get_cpu_num(cpuset_service))
                 logger.info('Number of CPUs for service' + cpunum_service)
+                jvm_outputline = jvm_outputline + ',' + cpunum_service
                 for concurrency in concurrency_conf:
+                    jvm_outputline = jvm_outputline + ',' + concurrency
                     logger.info('Number of concurrent requests ' + concurrency)
                     pid = start_java_process(jvmcmd, cpuset_service)
                     logger.info('Java process PID is: ' + pid)
@@ -193,8 +196,8 @@ def start_java_process(java_cmd, cpuset):
 def execute_test_single(cpuset, threads, concurrency, duration):
     logger.info('Executing test with concurrency: ' + str(concurrency) + ' and duration ' + str(
         duration) + ' and threads ' + str(threads))
-    cmd = 'taskset -c ' + str(cpuset) + ' ' + wrkcmd + '--latency --timeout ' + wrktimeout + ' -d' + str(
-        duration) + 's -c' + str(concurrency) + ' -t' + str(threads) + ' http://localhost:8080/greeting?name=Maarten'
+    cmd = 'taskset -c ' + str(cpuset) + ' ' + wrkcmd + ' --latency --timeout ' + wrktimeout + ' -d' + str(
+        duration) + 's -c' + str(concurrency) + ' -t' + str(threads) + ' http://localhost:8080/people'
     process = subprocess.run(cmd.split(' '), check=True, stdout=subprocess.PIPE, universal_newlines=True)
     output = process.stdout
     logger.debug('Executing test command ' + cmd)
