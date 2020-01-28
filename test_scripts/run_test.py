@@ -46,6 +46,8 @@ concurrency_conf = ['1', '2', '4', '8', '16', '32', '64', '128', '256', '512', '
 # JAR files to test with
 jarfiles = [{'filename': 'sb_jparest_hikari_jdbc-0.0.1-SNAPSHOT.jar', 'description': 'Spring Boot JPA REST JDBC',
              'driver': 'jdbc', 'pool': 'hikari', 'servlet_engine': 'tomcat', 'framework': 'JPA Data REST'},
+            {'filename': 'sb_jpa_hikari_jdbc-0.0.1-SNAPSHOT.jar', 'description': 'Spring Boot JPA JDBC',
+             'driver': 'jdbc', 'pool': 'hikari', 'servlet_engine': 'tomcat', 'framework': 'JPA Data'},
             {'filename': 'sb_webflux_nopool_r2dbc-0.0.1-SNAPSHOT.jar',
              'description': 'Spring Boot WebFlux No pool R2DBC', 'driver': 'r2dbc', 'pool': 'none',
              'servlet_engine': 'netty', 'framework': 'Data'},
@@ -143,7 +145,10 @@ def exec_all_tests():
 
 
 def wrk_data(wrk_output):
-    return ',' + wrk_output.get('lat_avg') + ',' + wrk_output.get('lat_stdev') + ',' + wrk_output.get('lat_max') + ',' + wrk_output.get('req_avg') + ',' + wrk_output.get('req_stdev') + ',' + wrk_output.get('req_max') + ',' + wrk_output.get('tot_requests') + ',' + wrk_output.get('tot_duration') + ',' + wrk_output.get('read');
+    return ',' + wrk_output.get('lat_avg') + ',' + wrk_output.get('lat_stdev') + ',' + wrk_output.get(
+        'lat_max') + ',' + wrk_output.get('req_avg') + ',' + wrk_output.get('req_stdev') + ',' + wrk_output.get(
+        'req_max') + ',' + wrk_output.get('tot_requests') + ',' + wrk_output.get('tot_duration') + ',' + wrk_output.get(
+        'read');
 
 
 def wrk_data_failed():
