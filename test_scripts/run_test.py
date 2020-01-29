@@ -171,22 +171,22 @@ def parse_wrk_output(wrk_output):
     #  Socket errors: connect 3076, read 0, write 0, timeout 0
     for line in wrk_output.splitlines():
         logger.debug("wrk output: "+line)
-        x = re.search("^\s+Latency\s+(\d+\.\d+\w+)\s+(\d+\.\d+\w+)\s+(\d+\.\d+\w+).*$", line)
+        x = re.search("^\s+Latency\s+(\d+\.\d+\w*)\s+(\d+\.\d+\w*)\s+(\d+\.\d+\w*).*$", line)
         if x is not None:
             retval['lat_avg'] = x.group(1)
             retval['lat_stdev'] = x.group(2)
             retval['lat_max'] = x.group(3)
-        x = re.search("^\s+Req/Sec\s+(\d+\.\d+)\s+(\d+\.\d+)\s+(\d+\.\d+).*$", line)
+        x = re.search("^\s+Req/Sec\s+(\d+\.\d+\w*)\s+(\d+\.\d+\w*)\s+(\d+\.\d+\w*).*$", line)
         if x is not None:
             retval['req_avg'] = x.group(1)
             retval['req_stdev'] = x.group(2)
             retval['req_max'] = x.group(3)
-        x = re.search("^\s+(\d+)\ requests in (\d+\.\d+\w+)\,\ (\d+\.\d+\w+)\ read.*$", line)
+        x = re.search("^\s+(\d+)\ requests in (\d+\.\d+\w*)\,\ (\d+\.\d+\w*)\ read.*$", line)
         if x is not None:
             retval['tot_requests'] = x.group(1)
             retval['tot_duration'] = x.group(2)
             retval['read'] = x.group(3)
-        x = re.search("^\s+Socket errors:\ connect (\d+)\,\ read (\d+)\,\ write\ (\d+)\,\ timeout\ (\d+).*$", line)
+        x = re.search("^\s+Socket errors:\ connect (\d+\w*)\,\ read (\d+\w*)\,\ write\ (\d+\w*)\,\ timeout\ (\d+\w*).*$", line)
         if x is not None:
             retval['err_connect'] = x.group(1)
             retval['err_read'] = x.group(2)
