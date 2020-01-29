@@ -76,7 +76,10 @@ class DatabaseConfiguration extends AbstractR2dbcConfiguration {
         initializer.setConnectionFactory(connectionFactory);
 
         CompositeDatabasePopulator populator = new CompositeDatabasePopulator();
-        populator.addPopulators(new ResourceDatabasePopulator(new ClassPathResource("schema.sql")));
+        ClassPathResource cpr = new ClassPathResource("schema.sql");
+        if (cpr.exists()) {
+            populator.addPopulators(new ResourceDatabasePopulator(cpr));
+        }
         initializer.setDatabasePopulator(populator);
 
         return initializer;
