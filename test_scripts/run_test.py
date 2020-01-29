@@ -1,3 +1,4 @@
+import sys
 import logging
 import os
 import os.path
@@ -93,7 +94,7 @@ def exec_all_tests():
     logger.info('Using logfile: ' + resultsfile)
     # write header
     with open(resultsfile, 'a') as the_file:
-        the_file.write('description,driver,asyncservice,pool_used,asyncdriver,framework,cpus_load,cpus_service,concurrency\n')
+        the_file.write('description,driver,asyncservice,pool_used,asyncdriver,framework,cpus_load,cpus_service,concurrency,lat_avg,lat_stdev,lat_max,req_avg,req_stdev,req_max,tot_requests,tot_duration,read,err_connect,err_read,err_write,err_timeout\n')
     for jarfile in jarfiles:
         jvmcmd = build_jvmcmd(jarfile.get('filename'));
         jvm_outputline = jarfile.get('description') + ',' + jarfile.get('driver') + ',' + jarfile.get('asyncservice') + ',' + jarfile.get(
@@ -105,7 +106,7 @@ def exec_all_tests():
             jvm_outputline = jvm_outputline + ',' + cpunum_load
             for cpuset_service in cpuset_conf2:
                 cpunum_service = str(get_cpu_num(cpuset_service))
-                logger.info('Number of CPUs for service' + cpunum_service)
+                logger.info('Number of CPUs for service ' + cpunum_service)
                 jvm_outputline = jvm_outputline + ',' + cpunum_service
                 for concurrency in concurrency_conf:
                     jvm_outputline = jvm_outputline + ',' + concurrency
@@ -126,6 +127,7 @@ def exec_all_tests():
                         time.sleep(wait_after_primer)
                         output_test = execute_test_single(cpuset_load, cpunum_load, concurrency, test_duration)
                         wrk_output = parse_wrk_output(output_test)
+                        logger.debug("wrk_output: "+str(wrk_output))
                         outputline = jvm_outputline + wrk_data(wrk_output)
                     except:
                         # Retry
@@ -136,9 +138,11 @@ def exec_all_tests():
                             time.sleep(wait_after_primer)
                             output_test = execute_test_single(cpuset_load, cpunum_load, concurrency, test_duration)
                             wrk_output = parse_wrk_output(output_test)
+                            logger.debug("wrk_output: "+str(wrk_output))
                             outputline = jvm_outputline + wrk_data(wrk_output)
-                        except:
+                        except Exception as inst:
                             logger.warning("Giving up. Test failed. Writing FAILED to results file")
+                            logger.error("Error: "+str(inst))
                             outputline = jvm_outputline + wrk_data_failed()
                     outputline = outputline + ',' + str(test_duration)
                     with open(resultsfile, 'a') as the_file:
@@ -148,14 +152,14 @@ def exec_all_tests():
 
 
 def wrk_data(wrk_output):
-    return ',' + wrk_output.get('lat_avg') + ',' + wrk_output.get('lat_stdev') + ',' + wrk_output.get(
+        return ',' + wrk_output.get('lat_avg') + ',' + wrk_output.get('lat_stdev') + ',' + wrk_output.get(
         'lat_max') + ',' + wrk_output.get('req_avg') + ',' + wrk_output.get('req_stdev') + ',' + wrk_output.get(
         'req_max') + ',' + wrk_output.get('tot_requests') + ',' + wrk_output.get('tot_duration') + ',' + wrk_output.get(
-        'read');
+        'read') + ',' + wrk_output.get('err_connect') + ',' + wrk_output.get('err_read') + ',' + wrk_output.get('err_write') + ',' + wrk_output.get('err_timeout');
 
 
 def wrk_data_failed():
-    return ',FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED';
+    return ',FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED';
 
 
 def parse_wrk_output(wrk_output):
@@ -164,8 +168,10 @@ def parse_wrk_output(wrk_output):
     #    Latency    58.53ms    6.42ms  69.83ms   62.50%
     #    Req/Sec    16.00      5.16    20.00     60.00%
     #  16 requests in 1.00s, 766.79KB read
+    #  Socket errors: connect 3076, read 0, write 0, timeout 0
     for line in wrk_output.splitlines():
-        x = re.search("^\s+Latency\s+(\d+\.\d+)ms\s+(\d+\.\d+)ms\s+(\d+\.\d+)ms.*$", line)
+        logger.debug("wrk output: "+line)
+        x = re.search("^\s+Latency\s+(\d+\.\d+\w+)\s+(\d+\.\d+\w+)\s+(\d+\.\d+\w+).*$", line)
         if x is not None:
             retval['lat_avg'] = x.group(1)
             retval['lat_stdev'] = x.group(2)
@@ -175,11 +181,25 @@ def parse_wrk_output(wrk_output):
             retval['req_avg'] = x.group(1)
             retval['req_stdev'] = x.group(2)
             retval['req_max'] = x.group(3)
-        x = re.search("^\s+(\d+)\ requests in (\d+\.\d+)s\,\ (\d+\.\d+\w+)\ read.*$", line)
+        x = re.search("^\s+(\d+)\ requests in (\d+\.\d+\w+)\,\ (\d+\.\d+\w+)\ read.*$", line)
         if x is not None:
             retval['tot_requests'] = x.group(1)
             retval['tot_duration'] = x.group(2)
             retval['read'] = x.group(3)
+        x = re.search("^\s+Socket errors:\ connect (\d+)\,\ read (\d+)\,\ write\ (\d+)\,\ timeout\ \d+.*$", line)
+        if x is not None:
+            retval['err_connect'] = x.group(1)
+            retval['err_read'] = x.group(2)
+            retval['err_write'] = x.group(3)
+            retval['err_timeout'] = x.group(4)
+    if 'err_connect' not in retval:
+        retval['err_connect'] = 0
+    if 'err_read' not in retval:
+        retval['err_read'] = 0
+    if 'err_write' not in retval:
+        retval['err_write'] = 0
+    if 'err_timeout' not in retval:
+        retval['err_timeout'] = 0
     return retval
 
 
