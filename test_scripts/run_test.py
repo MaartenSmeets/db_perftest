@@ -186,20 +186,20 @@ def parse_wrk_output(wrk_output):
             retval['tot_requests'] = x.group(1)
             retval['tot_duration'] = x.group(2)
             retval['read'] = x.group(3)
-        x = re.search("^\s+Socket errors:\ connect (\d+)\,\ read (\d+)\,\ write\ (\d+)\,\ timeout\ \d+.*$", line)
+        x = re.search("^\s+Socket errors:\ connect (\d+)\,\ read (\d+)\,\ write\ (\d+)\,\ timeout\ (\d+).*$", line)
         if x is not None:
             retval['err_connect'] = x.group(1)
             retval['err_read'] = x.group(2)
             retval['err_write'] = x.group(3)
             retval['err_timeout'] = x.group(4)
     if 'err_connect' not in retval:
-        retval['err_connect'] = 0
+        retval['err_connect'] = '0'
     if 'err_read' not in retval:
-        retval['err_read'] = 0
+        retval['err_read'] = '0'
     if 'err_write' not in retval:
-        retval['err_write'] = 0
+        retval['err_write'] = '0'
     if 'err_timeout' not in retval:
-        retval['err_timeout'] = 0
+        retval['err_timeout'] = '0'
     return retval
 
 
