@@ -1,5 +1,6 @@
 package nl.amis.smeetsm;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.validation.constraints.NotNull;
@@ -23,8 +24,8 @@ import java.util.List;
 @Consumes({MediaType.APPLICATION_JSON})
 public class PersonRestResourceRxJava {
 
-    /* Instance variable(s): */
-    protected AbstractServiceBaseRxJava<Person> mService;
+    @Autowired
+    protected PersonService mService;
 
     /**
      * Retrieves all entities.
@@ -33,7 +34,6 @@ public class PersonRestResourceRxJava {
      */
     @GET
     public void getAll(@Suspended final AsyncResponse inAsyncResponse) {
-        System.out.println("Get request called");
         mService.findAll().subscribe(
                 inResult -> inAsyncResponse.resume(Response.ok(entityListToArray(inResult)).build()),
                 inError -> inAsyncResponse.resume(
@@ -168,9 +168,5 @@ public class PersonRestResourceRxJava {
 
     public AbstractServiceBaseRxJava<Person> getService() {
         return mService;
-    }
-
-    public void setService(final AbstractServiceBaseRxJava<Person> inService) {
-        mService = inService;
     }
 }
