@@ -103,13 +103,11 @@ def exec_all_tests():
         for cpuset_load in cpuset_conf1:
             cpunum_load = str(get_cpu_num(cpuset_load))
             logger.info('Number of CPUs for load generation ' + cpunum_load)
-            jvm_outputline = jvm_outputline + ',' + cpunum_load
             for cpuset_service in cpuset_conf2:
                 cpunum_service = str(get_cpu_num(cpuset_service))
                 logger.info('Number of CPUs for service ' + cpunum_service)
-                jvm_outputline = jvm_outputline + ',' + cpunum_service
                 for concurrency in concurrency_conf:
-                    jvm_outputline = jvm_outputline + ',' + concurrency
+                    jvm_outputline = jvm_outputline ',' + cpunum_load + ',' + cpunum_service + ',' + concurrency
                     logger.info('Number of concurrent requests ' + concurrency)
                     pid = start_java_process(jvmcmd, cpuset_service)
                     logger.info('Java process PID is: ' + pid)
