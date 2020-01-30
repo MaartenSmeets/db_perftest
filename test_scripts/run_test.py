@@ -1,4 +1,3 @@
-import sys
 import logging
 import os
 import os.path
@@ -46,18 +45,23 @@ concurrency_conf = ['1', '16', '256', '4096', '65536']
 
 # JAR files to test with
 jarfiles = [{'filename': 'sb_jparest_hikari_jdbc-0.0.1-SNAPSHOT.jar', 'description': 'Spring Boot JPA REST JDBC',
-             'driver': 'jdbc', 'pool': 'hikari', 'servlet_engine': 'tomcat', 'framework': 'JPA Data REST','asyncservice':'no','pool_used':'yes','asyncdriver':'no'},
+             'driver': 'jdbc', 'pool': 'hikari', 'servlet_engine': 'tomcat', 'framework': 'JPA Data REST',
+             'asyncservice': 'no', 'pool_used': 'yes', 'asyncdriver': 'no'},
             {'filename': 'sb_jpa_hikari_jdbc-0.0.1-SNAPSHOT.jar', 'description': 'Spring Boot JPA JDBC',
-             'driver': 'jdbc', 'pool': 'hikari', 'servlet_engine': 'tomcat', 'framework': 'Spring Boot Data','asyncservice':'no','pool_used':'yes','asyncdriver':'no'},
+             'driver': 'jdbc', 'pool': 'hikari', 'servlet_engine': 'tomcat', 'framework': 'Spring Boot Data',
+             'asyncservice': 'no', 'pool_used': 'yes', 'asyncdriver': 'no'},
             {'filename': 'sb_webflux_nopool_r2dbc-0.0.1-SNAPSHOT.jar',
              'description': 'Spring Boot WebFlux No pool R2DBC', 'driver': 'r2dbc', 'pool': 'none',
-             'servlet_engine': 'netty', 'framework': 'Spring Boot Data','asyncservice':'yes','pool_used':'no','asyncdriver':'yes'},
+             'servlet_engine': 'netty', 'framework': 'Spring Boot Data', 'asyncservice': 'yes', 'pool_used': 'no',
+             'asyncdriver': 'yes'},
             {'filename': 'jaxrsrxjava_jpa_hikari_jdbc-0.0.1-SNAPSHOT.jar',
              'description': 'JAX-RS RxJava JPA JDBC', 'driver': 'jdbc', 'pool': 'hikari',
-             'servlet_engine': 'tomcat', 'framework': 'RxJava','asyncservice':'yes','pool_used':'yes','asyncdriver':'no'},
+             'servlet_engine': 'tomcat', 'framework': 'RxJava', 'asyncservice': 'yes', 'pool_used': 'yes',
+             'asyncdriver': 'no'},
             {'filename': 'sb_webflux_r2dbcpool_r2dbc-0.0.1-SNAPSHOT.jar',
              'description': 'Spring Boot WebFlux R2DBC pool R2DBC', 'driver': 'r2dbc', 'pool': 'r2dbc',
-             'servlet_engine': 'netty', 'framework': 'Spring Boot Data','asyncservice':'yes','pool_used':'yes','asyncdriver':'yes'}]
+             'servlet_engine': 'netty', 'framework': 'Spring Boot Data', 'asyncservice': 'yes', 'pool_used': 'yes',
+             'asyncdriver': 'yes'}]
 
 
 def check_prereqs():
@@ -94,7 +98,8 @@ def exec_all_tests():
     logger.info('Using logfile: ' + resultsfile)
     # write header
     with open(resultsfile, 'a') as the_file:
-        the_file.write('description,driver,asyncservice,pool_used,asyncdriver,framework,cpus_load,cpus_service,concurrency,lat_avg,lat_stdev,lat_max,req_avg,req_stdev,req_max,tot_requests,tot_duration,read,err_connect,err_read,err_write,err_timeout\n')
+        the_file.write(
+            'description,driver,asyncservice,pool_used,asyncdriver,framework,cpus_load,cpus_service,concurrency,lat_avg,lat_stdev,lat_max,req_avg,req_stdev,req_max,tot_requests,tot_duration,read,err_connect,err_read,err_write,err_timeout\n')
     for jarfile in jarfiles:
         jvmcmd = build_jvmcmd(jarfile.get('filename'));
         logger.info('Processing command: ' + jvmcmd)
@@ -105,15 +110,18 @@ def exec_all_tests():
             for concurrency in concurrency_conf:
                 if int(concurrency) >= int(cpunum_load):
                     concurrency_local.append(concurrency)
-                    logger.info('Concurrency ' +concurrency+ ' >= ' + cpunum_load +' (threads/cores)')
                 else:
-                    logger.info('Concurrency ' +concurrency+ ' < ' +cpunum_load + ' (threads/cores). wrk does not support this. ignoring this concurrency setting')
+                    logger.debug(
+                        'Concurrency ' + concurrency + ' < ' + cpunum_load + ' (threads/cores). wrk does not support this. ignoring this concurrency setting')
             for cpuset_service in cpuset_conf2:
                 cpunum_service = str(get_cpu_num(cpuset_service))
                 logger.info('Number of CPUs for service ' + cpunum_service)
-                #concurrency_local is a selection of all the concurrency options. concurrency has to be >= threads/cores for wrk
+                # concurrency_local is a selection of all the concurrency options. concurrency has to be >= threads/cores for wrk
                 for concurrency in concurrency_local:
-                    jvm_outputline = jarfile.get('description') + ',' + jarfile.get('driver') + ',' + jarfile.get('asyncservice') + ',' + jarfile.get('pool_used') + ',' + jarfile.get('asyncdriver') + ',' + jarfile.get('servlet_engine') + ',' + jarfile.get('framework') + ',' + cpunum_load + ',' + cpunum_service + ',' + concurrency
+                    jvm_outputline = jarfile.get('description') + ',' + jarfile.get('driver') + ',' + jarfile.get(
+                        'asyncservice') + ',' + jarfile.get('pool_used') + ',' + jarfile.get(
+                        'asyncdriver') + ',' + jarfile.get('servlet_engine') + ',' + jarfile.get(
+                        'framework') + ',' + cpunum_load + ',' + cpunum_service + ',' + concurrency
                     logger.info('Number of concurrent requests ' + concurrency)
 
                     pid = start_java_process(jvmcmd, cpuset_service)
@@ -132,7 +140,7 @@ def exec_all_tests():
                         time.sleep(wait_after_primer)
                         output_test = execute_test_single(cpuset_load, cpunum_load, concurrency, test_duration)
                         wrk_output = parse_wrk_output(output_test)
-                        logger.debug("wrk_output: "+str(wrk_output))
+                        logger.debug("wrk_output: " + str(wrk_output))
                         outputline = jvm_outputline + wrk_data(wrk_output)
                     except:
                         # Retry
@@ -143,11 +151,11 @@ def exec_all_tests():
                             time.sleep(wait_after_primer)
                             output_test = execute_test_single(cpuset_load, cpunum_load, concurrency, test_duration)
                             wrk_output = parse_wrk_output(output_test)
-                            logger.debug("wrk_output: "+str(wrk_output))
+                            logger.debug("wrk_output: " + str(wrk_output))
                             outputline = jvm_outputline + wrk_data(wrk_output)
                         except Exception as inst:
                             logger.warning("Giving up. Test failed. Writing FAILED to results file")
-                            logger.error("Error: "+str(inst))
+                            logger.error("Error: " + str(inst))
                             outputline = jvm_outputline + wrk_data_failed()
                     outputline = outputline + ',' + str(test_duration)
                     with open(resultsfile, 'a') as the_file:
@@ -157,14 +165,87 @@ def exec_all_tests():
 
 
 def wrk_data(wrk_output):
-        return ',' + wrk_output.get('lat_avg') + ',' + wrk_output.get('lat_stdev') + ',' + wrk_output.get(
-        'lat_max') + ',' + wrk_output.get('req_avg') + ',' + wrk_output.get('req_stdev') + ',' + wrk_output.get(
-        'req_max') + ',' + wrk_output.get('tot_requests') + ',' + wrk_output.get('tot_duration') + ',' + wrk_output.get(
-        'read') + ',' + wrk_output.get('err_connect') + ',' + wrk_output.get('err_read') + ',' + wrk_output.get('err_write') + ',' + wrk_output.get('err_timeout');
+    return ',' + str(wrk_output.get('lat_avg')) + ',' + str(wrk_output.get('lat_stdev')) + ',' + str(wrk_output.get(
+        'lat_max')) + ',' + str(wrk_output.get('req_avg')) + ',' + str(wrk_output.get('req_stdev')) + ',' + str(
+        wrk_output.get(
+            'req_max')) + ',' + str(wrk_output.get('tot_requests')) + ',' + str(
+        wrk_output.get('tot_duration')) + ',' + str(wrk_output.get(
+        'read')) + ',' + str(wrk_output.get('err_connect')) + ',' + str(wrk_output.get('err_read')) + ',' + str(
+        wrk_output.get('err_write')) + ',' + str(wrk_output.get('err_timeout'))
 
 
 def wrk_data_failed():
     return ',FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED';
+
+
+def get_bytes(size_str):
+    x = re.search("^(\d+\.*\d*)(\w+)$", size_str)
+    if x is not None:
+        size = float(x.group(1))
+        suffix = (x.group(2)).lower()
+    else:
+        return size_str
+
+    if suffix == 'kb' or suffix == 'kib':
+        return size * 1024
+    elif suffix == 'mb' or suffix == 'mib':
+        return size * 1024 ** 2
+    elif suffix == 'gb' or suffix == 'gib':
+        return size * 1024 ** 3
+    elif suffix == 'tb' or suffix == 'tib':
+        return size * 1024 ** 3
+    elif suffix == 'pb' or suffix == 'pib':
+        return size * 1024 ** 4
+
+    return False
+
+
+def get_number(number_str):
+    x = re.search("^(\d+\.*\d*)(\w*)$", number_str)
+    if x is not None:
+        size = float(x.group(1))
+        suffix = (x.group(2)).lower()
+    else:
+        return number_str
+
+    if suffix == 'k':
+        return size * 1000
+    elif suffix == 'm':
+        return size * 1000 ** 2
+    elif suffix == 'g':
+        return size * 1000 ** 3
+    elif suffix == 't':
+        return size * 1000 ** 4
+    elif suffix == 'p':
+        return size * 1000 ** 5
+    else:
+        return size
+
+    return False
+
+
+def get_ms(time_str):
+    x = re.search("^(\d+\.*\d*)(\w*)$", time_str)
+    if x is not None:
+        size = float(x.group(1))
+        suffix = (x.group(2)).lower()
+    else:
+        return time_str
+
+    if suffix == 'us':
+        return size / 1000
+    elif suffix == 'ms':
+        return size
+    elif suffix == 's':
+        return size * 1000
+    elif suffix == 'm':
+        return size * 1000 * 60
+    elif suffix == 'h':
+        return size * 1000 * 60 * 60
+    else:
+        return size
+
+    return False
 
 
 def parse_wrk_output(wrk_output):
@@ -175,28 +256,29 @@ def parse_wrk_output(wrk_output):
     #  16 requests in 1.00s, 766.79KB read
     #  Socket errors: connect 3076, read 0, write 0, timeout 0
     for line in wrk_output.splitlines():
-        logger.debug("wrk output: "+line)
+        logger.debug("wrk output: " + line)
         x = re.search("^\s+Latency\s+(\d+\.\d+\w*)\s+(\d+\.\d+\w*)\s+(\d+\.\d+\w*).*$", line)
         if x is not None:
-            retval['lat_avg'] = x.group(1)
-            retval['lat_stdev'] = x.group(2)
-            retval['lat_max'] = x.group(3)
+            retval['lat_avg'] = get_ms(x.group(1))
+            retval['lat_stdev'] = get_ms(x.group(2))
+            retval['lat_max'] = get_ms(x.group(3))
         x = re.search("^\s+Req/Sec\s+(\d+\.\d+\w*)\s+(\d+\.\d+\w*)\s+(\d+\.\d+\w*).*$", line)
         if x is not None:
-            retval['req_avg'] = x.group(1)
-            retval['req_stdev'] = x.group(2)
-            retval['req_max'] = x.group(3)
+            retval['req_avg'] = get_number(x.group(1))
+            retval['req_stdev'] = get_number(x.group(2))
+            retval['req_max'] = get_number(x.group(3))
         x = re.search("^\s+(\d+)\ requests in (\d+\.\d+\w*)\,\ (\d+\.\d+\w*)\ read.*$", line)
         if x is not None:
-            retval['tot_requests'] = x.group(1)
-            retval['tot_duration'] = x.group(2)
-            retval['read'] = x.group(3)
-        x = re.search("^\s+Socket errors:\ connect (\d+\w*)\,\ read (\d+\w*)\,\ write\ (\d+\w*)\,\ timeout\ (\d+\w*).*$", line)
+            retval['tot_requests'] = get_number(x.group(1))
+            retval['tot_duration'] = get_ms(x.group(2))
+            retval['read'] = get_bytes(x.group(3))
+        x = re.search(
+            "^\s+Socket errors:\ connect (\d+\w*)\,\ read (\d+\w*)\,\ write\ (\d+\w*)\,\ timeout\ (\d+\w*).*$", line)
         if x is not None:
-            retval['err_connect'] = x.group(1)
-            retval['err_read'] = x.group(2)
-            retval['err_write'] = x.group(3)
-            retval['err_timeout'] = x.group(4)
+            retval['err_connect'] = get_number(x.group(1))
+            retval['err_read'] = get_number(x.group(2))
+            retval['err_write'] = get_number(x.group(3))
+            retval['err_timeout'] = get_number(x.group(4))
     if 'err_connect' not in retval:
         retval['err_connect'] = '0'
     if 'err_read' not in retval:
@@ -229,7 +311,7 @@ def start_java_process(java_cmd, cpuset):
 def execute_test_single(cpuset, threads, concurrency, duration):
     logger.info('Executing test with concurrency: ' + str(concurrency) + ' and duration ' + str(
         duration) + ' and threads ' + str(threads))
-    cmd = 'taskset -c ' + str(cpuset) + ' ' + wrkcmd + ' --latency --timeout ' + wrktimeout + ' -d' + str(
+    cmd = 'taskset -c ' + str(cpuset) + ' ' + wrkcmd + ' --timeout ' + wrktimeout + ' -d' + str(
         duration) + 's -c' + str(concurrency) + ' -t' + str(threads) + ' http://localhost:8080/people'
     process = subprocess.run(cmd.split(' '), check=True, stdout=subprocess.PIPE, universal_newlines=True)
     output = process.stdout
