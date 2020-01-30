@@ -99,7 +99,7 @@ def exec_all_tests():
     # write header
     with open(resultsfile, 'a') as the_file:
         the_file.write(
-            'description,driver,asyncservice,pool_used,asyncdriver,framework,cpus_load,cpus_service,concurrency,lat_avg,lat_stdev,lat_max,req_avg,req_stdev,req_max,tot_requests,tot_duration,read,err_connect,err_read,err_write,err_timeout\n')
+            'description,driver,asyncservice,pool_used,asyncdriver,framework,cpus_load,cpus_service,concurrency,lat_avg,lat_stdev,lat_max,req_avg,req_stdev,req_max,tot_requests,tot_duration,read,err_connect,err_read,err_write,err_timeout,req_sec_tot,read_tot\n')
     for jarfile in jarfiles:
         jvmcmd = build_jvmcmd(jarfile.get('filename'));
         logger.info('Processing command: ' + jvmcmd)
@@ -171,11 +171,11 @@ def wrk_data(wrk_output):
             'req_max')) + ',' + str(wrk_output.get('tot_requests')) + ',' + str(
         wrk_output.get('tot_duration')) + ',' + str(wrk_output.get(
         'read')) + ',' + str(wrk_output.get('err_connect')) + ',' + str(wrk_output.get('err_read')) + ',' + str(
-        wrk_output.get('err_write')) + ',' + str(wrk_output.get('err_timeout'))
+        wrk_output.get('err_write')) + ',' + str(wrk_output.get('err_timeout')) + ',' + str(wrk_output.get('req_sec_tot')) + ',' + str(wrk_output.get('read_tot'))
 
 
 def wrk_data_failed():
-    return ',FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED';
+    return ',FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED';
 
 
 def get_bytes(size_str):
@@ -255,6 +255,9 @@ def parse_wrk_output(wrk_output):
     #    Req/Sec    16.00      5.16    20.00     60.00%
     #  16 requests in 1.00s, 766.79KB read
     #  Socket errors: connect 3076, read 0, write 0, timeout 0
+    #Requests/sec:    135.86
+    #Transfer/sec:    422.62KB
+
     for line in wrk_output.splitlines():
         logger.debug("wrk output: " + line)
         x = re.search("^\s+Latency\s+(\d+\.\d+\w*)\s+(\d+\.\d+\w*)\s+(\d+\.\d+\w*).*$", line)
@@ -272,6 +275,12 @@ def parse_wrk_output(wrk_output):
             retval['tot_requests'] = get_number(x.group(1))
             retval['tot_duration'] = get_ms(x.group(2))
             retval['read'] = get_bytes(x.group(3))
+        x = re.search("^Requests\/sec\:\s+(\d+\.*\d*).*$", line)
+        if x is not None:
+            retval['req_sec_tot'] = get_number(x.group(1))
+        x = re.search("^Transfer\/sec\:\s+(\d+\.*\d*\w+).*$", line)
+        if x is not None:
+            retval['read_tot'] = get_bytes(x.group(1))
         x = re.search(
             "^\s+Socket errors:\ connect (\d+\w*)\,\ read (\d+\w*)\,\ write\ (\d+\w*)\,\ timeout\ (\d+\w*).*$", line)
         if x is not None:
@@ -280,13 +289,13 @@ def parse_wrk_output(wrk_output):
             retval['err_write'] = get_number(x.group(3))
             retval['err_timeout'] = get_number(x.group(4))
     if 'err_connect' not in retval:
-        retval['err_connect'] = '0'
+        retval['err_connect'] = 0
     if 'err_read' not in retval:
-        retval['err_read'] = '0'
+        retval['err_read'] = 0
     if 'err_write' not in retval:
-        retval['err_write'] = '0'
+        retval['err_write'] = 0
     if 'err_timeout' not in retval:
-        retval['err_timeout'] = '0'
+        retval['err_timeout'] = 0
     return retval
 
 
