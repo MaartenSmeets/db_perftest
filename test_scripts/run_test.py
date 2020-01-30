@@ -97,9 +97,7 @@ def exec_all_tests():
         the_file.write('description,driver,asyncservice,pool_used,asyncdriver,framework,cpus_load,cpus_service,concurrency,lat_avg,lat_stdev,lat_max,req_avg,req_stdev,req_max,tot_requests,tot_duration,read,err_connect,err_read,err_write,err_timeout\n')
     for jarfile in jarfiles:
         jvmcmd = build_jvmcmd(jarfile.get('filename'));
-        jvm_outputline = jarfile.get('description') + ',' + jarfile.get('driver') + ',' + jarfile.get('asyncservice') + ',' + jarfile.get(
-            'pool_used') + ',' + jarfile.get('asyncdriver') + ',' + jarfile.get('servlet_engine') + ',' + jarfile.get('framework')
-        logger.info('Processing: ' + jvm_outputline + ' using command: ' + jvmcmd)
+        logger.info('Processing command: ' + jvmcmd)
         for cpuset_load in cpuset_conf1:
             cpunum_load = str(get_cpu_num(cpuset_load))
             logger.info('Number of CPUs for load generation ' + cpunum_load)
@@ -107,7 +105,7 @@ def exec_all_tests():
                 cpunum_service = str(get_cpu_num(cpuset_service))
                 logger.info('Number of CPUs for service ' + cpunum_service)
                 for concurrency in concurrency_conf:
-                    jvm_outputline = jvm_outputline ',' + cpunum_load + ',' + cpunum_service + ',' + concurrency
+                    jvm_outputline = jarfile.get('description') + ',' + jarfile.get('driver') + ',' + jarfile.get('asyncservice') + ',' + jarfile.get('pool_used') + ',' + jarfile.get('asyncdriver') + ',' + jarfile.get('servlet_engine') + ',' + jarfile.get('framework') + ',' + cpunum_load + ',' + cpunum_service + ',' + concurrency
                     logger.info('Number of concurrent requests ' + concurrency)
                     pid = start_java_process(jvmcmd, cpuset_service)
                     logger.info('Java process PID is: ' + pid)
