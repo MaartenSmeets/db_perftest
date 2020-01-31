@@ -7,7 +7,7 @@ import subprocess
 import time
 from datetime import datetime
 
-test_duration = 10
+test_duration = 20
 primer_duration = 1
 wait_after_primer = 1
 wait_to_start = 10
@@ -141,6 +141,8 @@ def exec_all_tests():
                         output_test = execute_test_single(cpuset_load, cpunum_load, concurrency, test_duration)
                         wrk_output = parse_wrk_output(output_test)
                         logger.debug("wrk_output: " + str(wrk_output))
+                        if str(wrk_output.get('read_tot')) == '0.0':
+                            raise Exception('No bytes read. Test failed')
                         outputline = jvm_outputline + wrk_data(wrk_output)
                     except:
                         # Retry
@@ -152,6 +154,8 @@ def exec_all_tests():
                             output_test = execute_test_single(cpuset_load, cpunum_load, concurrency, test_duration)
                             wrk_output = parse_wrk_output(output_test)
                             logger.debug("wrk_output: " + str(wrk_output))
+                            if str(wrk_output.get('read_tot')) == '0.0':
+                                raise Exception('No bytes read. Test failed')
                             outputline = jvm_outputline + wrk_data(wrk_output)
                         except Exception as inst:
                             logger.warning("Giving up. Test failed. Writing FAILED to results file")
@@ -186,7 +190,9 @@ def get_bytes(size_str):
     else:
         return size_str
 
-    if suffix == 'kb' or suffix == 'kib':
+    if suffix == 'b':
+        return size
+    elif suffix == 'kb' or suffix == 'kib':
         return size * 1024
     elif suffix == 'mb' or suffix == 'mib':
         return size * 1024 ** 2
