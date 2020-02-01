@@ -7,7 +7,7 @@ import subprocess
 import time
 from datetime import datetime
 
-test_duration = 20
+test_duration = 10
 primer_duration = 1
 wait_after_primer = 1
 wait_to_start = 10
@@ -39,9 +39,9 @@ fh.setFormatter(formatter)
 logger.addHandler(ch)
 logger.addHandler(fh)
 
-cpuset_conf1 = ['3', '3,5', '3,5,7', '3,5,7,9', '3,5,7,9,11']
-cpuset_conf2 = ['2', '2,4', '2,4,6', '2,4,6,8', '2,4,6,8,10']
-concurrency_conf = ['1', '16', '256', '4096', '65536']
+cpuset_conf1 = ['3', '3,5', '3,5,7,9']
+cpuset_conf2 = ['2', '2,4', '2,4,6,8']
+concurrency_conf = ['1', '2', '4', '10', '25', '50', '75', '100']
 
 # JAR files to test with
 jarfiles = [{'filename': 'sb_jparest_hikari_jdbc-0.0.1-SNAPSHOT.jar', 'description': 'Spring Boot JPA REST JDBC',
@@ -254,8 +254,6 @@ def get_ms(time_str):
     return False
 
 
-def parse_wrk_output(wrk_output):
-    retval = {}
     #  Thread Stats Avg        Stdev   Max       +/- Stdev
     #    Latency    58.53ms    6.42ms  69.83ms   62.50%
     #    Req/Sec    16.00      5.16    20.00     60.00%
@@ -263,6 +261,9 @@ def parse_wrk_output(wrk_output):
     #  Socket errors: connect 3076, read 0, write 0, timeout 0
     #Requests/sec:    135.86
     #Transfer/sec:    422.62KB
+
+def parse_wrk_output(wrk_output):
+    retval = {}
 
     for line in wrk_output.splitlines():
         logger.debug("wrk output: " + line)
@@ -287,8 +288,7 @@ def parse_wrk_output(wrk_output):
         x = re.search("^Transfer\/sec\:\s+(\d+\.*\d*\w+).*$", line)
         if x is not None:
             retval['read_tot'] = get_bytes(x.group(1))
-        x = re.search(
-            "^\s+Socket errors:\ connect (\d+\w*)\,\ read (\d+\w*)\,\ write\ (\d+\w*)\,\ timeout\ (\d+\w*).*$", line)
+        x = re.search("^\s+Socket errors:\ connect (\d+\w*)\,\ read (\d+\w*)\,\ write\ (\d+\w*)\,\ timeout\ (\d+\w*).*$", line)
         if x is not None:
             retval['err_connect'] = get_number(x.group(1))
             retval['err_read'] = get_number(x.group(2))
