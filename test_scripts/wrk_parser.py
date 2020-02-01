@@ -130,7 +130,8 @@ def parse_wrk_output(wrk_output):
 
 
 def execute_wrk(cpuset, threads, concurrency, duration, timeout, url):
-    cmd = 'taskset -c ' + str(cpuset) + ' ' + wrkcmd + ' --timeout ' + str(timeout) + ' -d' + str(duration) + 's -c' + str(
+    cmd = 'taskset -c ' + str(cpuset) + ' ' + wrkcmd + ' --timeout ' + str(timeout) + ' -d' + str(
+        duration) + 's -c' + str(
         concurrency) + ' -t' + str(threads) + ' ' + url
     process = subprocess.run(cmd.split(' '), check=True, stdout=subprocess.PIPE, universal_newlines=True)
     output = process.stdout
@@ -138,8 +139,15 @@ def execute_wrk(cpuset, threads, concurrency, duration, timeout, url):
 
 
 def main():
+    print("****wrk output: \n\n")
     wrk_output = execute_wrk(1, 2, 100, 5, 10, 'http://www.google.com')
-    print(parse_wrk_output(wrk_output))
+    print(str(wrk_output) + "\n\n")
+    print("****wrk output dict: \n\n")
+    wrk_output_dict = parse_wrk_output(wrk_output)
+    print(str(wrk_output_dict) + "\n\n")
+    print("****wrk output csv line: \n\n")
+    wrk_output_csv = wrk_data(wrk_output_dict)
+    print(str(wrk_output_csv))
 
 
 if __name__ == '__main__':
