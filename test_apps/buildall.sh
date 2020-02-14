@@ -25,3 +25,7 @@ mvn clean package
 mv target/*.jar ..
 cd ..
 
+cd qs_resteasy_r2dbcpool_r2dbc
+mvn clean package
+mv target/qs_resteasy_r2dbcpool_r2dbc-1.0-SNAPSHOT-runner.jar ../qs_resteasy_r2dbcpool_r2dbc-1.0-SNAPSHOT.jar
+cd ..
