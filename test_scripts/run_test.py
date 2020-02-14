@@ -86,7 +86,7 @@ def build_jvmcmd(jar):
 
 
 def get_cpuusage(pid):
-    cmd = 'cat /proc/' + pid + '/stat | cut -d ' ' -f 14-17'
+    cmd = 'cat /proc/' + pid + '/stat | cut -d \' \' -f 14-17'
     output = (subprocess.getoutput(cmd)).replace(' ', ',')
     return ',' + output
 
