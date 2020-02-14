@@ -58,6 +58,10 @@ jarfiles = [{'filename': 'sb_jparest_hikari_jdbc-0.0.1-SNAPSHOT.jar', 'descripti
              'description': 'JAX-RS RxJava JPA JDBC', 'driver': 'jdbc', 'pool': 'hikari',
              'servlet_engine': 'tomcat', 'framework': 'RxJava', 'asyncservice': 'yes', 'pool_used': 'yes',
              'asyncdriver': 'no'},
+            {'filename': 'qs_resteasy_r2dbcpool_r2dbc-1.0-SNAPSHOT.jar',
+             'description': 'Quarkus RestEasy R2DBC', 'driver': 'r2dbc', 'pool': 'r2dbc',
+             'servlet_engine': 'resteasy', 'framework': 'Quarkus RestEasy', 'asyncservice': 'yes', 'pool_used': 'yes',
+             'asyncdriver': 'yes'},
             {'filename': 'sb_webflux_r2dbcpool_r2dbc-0.0.1-SNAPSHOT.jar',
              'description': 'Spring Boot WebFlux R2DBC pool R2DBC', 'driver': 'r2dbc', 'pool': 'r2dbc',
              'servlet_engine': 'netty', 'framework': 'Spring Boot Data', 'asyncservice': 'yes', 'pool_used': 'yes',
@@ -75,6 +79,12 @@ def check_prereqs():
 
 def build_jvmcmd(jar):
     return javacmd + ' ' + '-jar ' + jar
+
+
+def get_cpuusage(pid):
+    cmd = 'cat /proc/' + pid + '/stat | cut -d ' ' -f 14-17'
+    output = (subprocess.getoutput(cmd)).replace(' ', ',')
+    return ',' + output
 
 
 # Estimate test duration
@@ -99,7 +109,7 @@ def exec_all_tests():
     # write header
     with open(resultsfile, 'a') as the_file:
         the_file.write(
-            'description,driver,asyncservice,pool_used,asyncdriver,framework,cpus_load,cpus_service,concurrency,lat_avg,lat_stdev,lat_max,req_avg,req_stdev,req_max,tot_requests,tot_duration,read,err_connect,err_read,err_write,err_timeout,req_sec_tot,read_tot\n')
+            'description,driver,asyncservice,pool_used,asyncdriver,framework,cpus_load,cpus_service,concurrency,lat_avg,lat_stdev,lat_max,req_avg,req_stdev,req_max,tot_requests,tot_duration,read,err_connect,err_read,err_write,err_timeout,req_sec_tot,read_tot,user_cpu,kern_cpu,user_child_cpu,kern_child_cpu\n')
     for jarfile in jarfiles:
         jvmcmd = build_jvmcmd(jarfile.get('filename'));
         logger.info('Processing command: ' + jvmcmd)
@@ -143,7 +153,7 @@ def exec_all_tests():
                         logger.debug("wrk_output: " + str(wrk_output))
                         if str(wrk_output.get('read_tot')) == '0.0':
                             raise Exception('No bytes read. Test failed')
-                        outputline = jvm_outputline + wrk_data(wrk_output)
+                        outputline = jvm_outputline + wrk_data(wrk_output) + get_cpuusage(pid)
                     except:
                         # Retry
                         logger.warning('Executing retry')
@@ -156,7 +166,7 @@ def exec_all_tests():
                             logger.debug("wrk_output: " + str(wrk_output))
                             if str(wrk_output.get('read_tot')) == '0.0':
                                 raise Exception('No bytes read. Test failed')
-                            outputline = jvm_outputline + wrk_data(wrk_output)
+                            outputline = jvm_outputline + wrk_data(wrk_output) + get_cpuusage(pid)
                         except Exception as inst:
                             logger.warning("Giving up. Test failed. Writing FAILED to results file")
                             logger.error("Error: " + str(inst))
@@ -175,11 +185,12 @@ def wrk_data(wrk_output):
             'req_max')) + ',' + str(wrk_output.get('tot_requests')) + ',' + str(
         wrk_output.get('tot_duration')) + ',' + str(wrk_output.get(
         'read')) + ',' + str(wrk_output.get('err_connect')) + ',' + str(wrk_output.get('err_read')) + ',' + str(
-        wrk_output.get('err_write')) + ',' + str(wrk_output.get('err_timeout')) + ',' + str(wrk_output.get('req_sec_tot')) + ',' + str(wrk_output.get('read_tot'))
+        wrk_output.get('err_write')) + ',' + str(wrk_output.get('err_timeout')) + ',' + str(
+        wrk_output.get('req_sec_tot')) + ',' + str(wrk_output.get('read_tot'))
 
 
 def wrk_data_failed():
-    return ',FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED';
+    return ',FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED';
 
 
 def get_bytes(size_str):
@@ -253,14 +264,14 @@ def get_ms(time_str):
 
     return False
 
-
     #  Thread Stats Avg        Stdev   Max       +/- Stdev
     #    Latency    58.53ms    6.42ms  69.83ms   62.50%
     #    Req/Sec    16.00      5.16    20.00     60.00%
     #  16 requests in 1.00s, 766.79KB read
     #  Socket errors: connect 3076, read 0, write 0, timeout 0
-    #Requests/sec:    135.86
-    #Transfer/sec:    422.62KB
+    # Requests/sec:    135.86
+    # Transfer/sec:    422.62KB
+
 
 def parse_wrk_output(wrk_output):
     retval = {}
@@ -288,7 +299,8 @@ def parse_wrk_output(wrk_output):
         x = re.search("^Transfer\/sec\:\s+(\d+\.*\d*\w+).*$", line)
         if x is not None:
             retval['read_tot'] = get_bytes(x.group(1))
-        x = re.search("^\s+Socket errors:\ connect (\d+\w*)\,\ read (\d+\w*)\,\ write\ (\d+\w*)\,\ timeout\ (\d+\w*).*$", line)
+        x = re.search(
+            "^\s+Socket errors:\ connect (\d+\w*)\,\ read (\d+\w*)\,\ write\ (\d+\w*)\,\ timeout\ (\d+\w*).*$", line)
         if x is not None:
             retval['err_connect'] = get_number(x.group(1))
             retval['err_read'] = get_number(x.group(2))
