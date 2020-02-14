@@ -1,4 +1,4 @@
-version: '3.5'
+version: '2.4'
 
 services:
   postgres:
@@ -15,6 +15,7 @@ services:
     networks:
       - postgres
     restart: unless-stopped
+    cpuset: "10,11"
   
   pgadmin:
     container_name: pgadmin_container
@@ -29,6 +30,7 @@ services:
     networks:
       - postgres
     restart: unless-stopped
+    cpuset: "10,11"
 
 networks:
   postgres:
