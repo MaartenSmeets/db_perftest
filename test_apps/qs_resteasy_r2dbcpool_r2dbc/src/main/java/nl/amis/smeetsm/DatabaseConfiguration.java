@@ -21,9 +21,9 @@ import java.util.logging.Logger;
 @ApplicationScoped
 public class DatabaseConfiguration {
 
+    private static final Logger LOGGER = Logger.getLogger(DatabaseConfiguration.class.getCanonicalName());
     @Inject
     PgPool client;
-
     @Inject
     @ConfigProperty(name = "myapp.schema.create", defaultValue = "true")
     boolean schemaCreate;
@@ -34,8 +34,6 @@ public class DatabaseConfiguration {
             initdb();
         }
     }
-
-    private static final Logger LOGGER = Logger.getLogger(DatabaseConfiguration.class.getCanonicalName());
 
     void onStart(@Observes StartupEvent ev) {
         LOGGER.info("The application is starting...");
@@ -60,11 +58,12 @@ public class DatabaseConfiguration {
     private void initdb() {
         System.out.println("InitDB");
         ClassLoader classLoader = getClass().getClassLoader();
-        InputStream inputStream = classLoader.getResourceAsStream("schema.sql");
         String data = "";
         try {
+            InputStream inputStream = classLoader.getResourceAsStream("schema.sql");
+
             data = readFromInputStream(inputStream);
-        } catch (IOException e) {
+        } catch (Exception e) {
             data = "";
         }
         if (data != null && !data.equals("")) {
