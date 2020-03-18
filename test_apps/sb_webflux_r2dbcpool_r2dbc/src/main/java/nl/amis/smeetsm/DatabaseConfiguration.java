@@ -32,6 +32,9 @@ class DatabaseConfiguration extends AbstractR2dbcConfiguration {
     @Value("${spring.r2dbc.password}")
     String password;
 
+    @Value("${spring.r2dbc.max-size}")
+    String maxSize;
+
     @Value("${spring.r2dbc.url}")
     String url;
 
@@ -50,7 +53,7 @@ class DatabaseConfiguration extends AbstractR2dbcConfiguration {
         return ConnectionFactories.get(ConnectionFactoryOptions.builder()
                 .option(DRIVER, DB_DRIVER)
                 .option(PROTOCOL, DB_PROTOCOL)
-                .option(MAX_SIZE, maxClientConnections)
+                .option(MAX_SIZE, Integer.valueOf(maxSize))
                 .option(HOST, host)
                 .option(PORT, port)
                 .option(USER, username)
