@@ -42,22 +42,24 @@ logger.addHandler(fh)
 
 cpuset_conf1 = ['3,5,7,9']
 cpuset_conf2 = ['2,4,6,8']
-concurrency_conf = ['1', '10', '100']
+concurrency_conf = ['4','100','200']
 
 # JAR files to test with
-jarfiles = [     {'filename': 'sb_jpa_hikari_jdbc-0.0.1-SNAPSHOT.jar', 'description': 'Spring Boot JPA JDBC',
-                  'driver': 'jdbc', 'pool': 'hikari', 'servlet_engine': 'tomcat', 'framework': 'Spring Boot Data',
-                  'asyncservice': 'no', 'pool_used': 'yes', 'asyncdriver': 'no'},
+jarfiles = [     {'filename': 'sb_jpa_hikari_jdbc-0.0.1-SNAPSHOT.jar',
+                  'description': 'Spring Boot JDBC',
+                  'asyncservice': 'no',
+                  'asyncdriver': 'no'},
                  {'filename': 'sb_webflux_r2dbcpool_r2dbc-0.0.1-SNAPSHOT.jar',
-                  'description': 'Spring Boot WebFlux R2DBC pool R2DBC', 'driver': 'r2dbc', 'pool': 'r2dbc',
-                  'servlet_engine': 'netty', 'framework': 'Spring Boot Data', 'asyncservice': 'yes', 'pool_used': 'yes',
+                  'description': 'Spring Boot WebFlux R2DBC',
+                  'asyncservice': 'yes',
                   'asyncdriver': 'yes'},
-                 {'filename': 'sb_jpa_r2dbcpool_r2dbc-0.0.1-SNAPSHOT.jar', 'description': 'Spring Boot JPA JDBC',
-                  'driver': 'jdbc', 'pool': 'hikari', 'servlet_engine': 'tomcat', 'framework': 'Spring Boot Data',
-                  'asyncservice': 'no', 'pool_used': 'yes', 'asyncdriver': 'yes'},
+                 {'filename': 'sb_jpa_r2dbcpool_r2dbc-0.0.1-SNAPSHOT.jar',
+                  'description': 'Spring Boot R2DBC',
+                  'asyncservice': 'no',
+                  'asyncdriver': 'yes'},
                  {'filename': 'sb_webflux_jpa_hikari_jdbc-0.0.1-SNAPSHOT.jar',
-                  'description': 'Spring Boot WebFlux R2DBC pool R2DBC', 'driver': 'r2dbc', 'pool': 'r2dbc',
-                  'servlet_engine': 'netty', 'framework': 'Spring Boot Data', 'asyncservice': 'no', 'pool_used': 'yes',
+                  'description': 'Spring Boot WebFlux JDBC',
+                  'asyncservice': 'yes',
                   'asyncdriver': 'no'}]
 
 def check_prereqs():
@@ -118,7 +120,7 @@ def exec_all_tests():
     # write header
     with open(resultsfile, 'a') as the_file:
         the_file.write(
-            'description,driver,asyncservice,pool_used,asyncdriver,servlet_engine,framework,cpus_load,cpus_service,concurrency,lat_avg,lat_stdev,lat_max,req_avg,req_stdev,req_max,tot_requests,tot_duration,read,err_connect,err_read,err_write,err_timeout,req_sec_tot,read_tot,user_cpu,kern_cpu,user_child_cpu,kern_child_cpu,mem_kb_uss,cpu,mem_kb_pss,mem_kb_rss,duration\n')
+            'description,asyncservice,asyncdriver,cpus_load,cpus_service,concurrency,lat_avg,lat_stdev,lat_max,req_avg,req_stdev,req_max,tot_requests,tot_duration,read,err_connect,err_read,err_write,err_timeout,req_sec_tot,read_tot,user_cpu,kern_cpu,user_child_cpu,kern_child_cpu,mem_kb_uss,cpu,mem_kb_pss,mem_kb_rss,duration\n')
     for jarfile in jarfiles:
         jvmcmd = build_jvmcmd(jarfile.get('filename'));
         logger.info('Processing command: ' + jvmcmd)
@@ -137,10 +139,7 @@ def exec_all_tests():
                 logger.info('Number of CPUs for service ' + cpunum_service)
                 # concurrency_local is a selection of all the concurrency options. concurrency has to be >= threads/cores for wrk
                 for concurrency in concurrency_local:
-                    jvm_outputline = jarfile.get('description') + ',' + jarfile.get('driver') + ',' + jarfile.get(
-                        'asyncservice') + ',' + jarfile.get('pool_used') + ',' + jarfile.get(
-                        'asyncdriver') + ',' + jarfile.get('servlet_engine') + ',' + jarfile.get(
-                        'framework') + ',' + cpunum_load + ',' + cpunum_service + ',' + concurrency
+                    jvm_outputline = jarfile.get('description') + ',' + jarfile.get('asyncservice') + ',' + jarfile.get('asyncdriver') + ',' + cpunum_load + ',' + cpunum_service + ',' + concurrency
                     logger.info('Number of concurrent requests ' + concurrency)
 
                     pid = start_java_process(jvmcmd, cpuset_service)
