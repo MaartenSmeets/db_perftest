@@ -5,7 +5,7 @@ mvn clean package
 mv target/*.jar ..
 cd ..
 
-cd sb_webflux_hikari_jdbc
+cd sb_webflux_jpa_hikari_jdbc
 mvn clean package
 mv target/*.jar ..
 cd ..
