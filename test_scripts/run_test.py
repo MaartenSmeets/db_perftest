@@ -40,48 +40,25 @@ fh.setFormatter(formatter)
 logger.addHandler(ch)
 logger.addHandler(fh)
 
-cpuset_conf1 = ['3', '3,5', '3,5,7,9']
-cpuset_conf2 = ['2', '2,4', '2,4,6,8']
-pool_conf = ['5', '20', '100']
-concurrency_conf = ['1', '2', '4', '10', '25', '50', '75', '100']
+cpuset_conf1 = ['3,5,7,9']
+cpuset_conf2 = ['2,4,6,8']
+concurrency_conf = ['1', '10', '100']
 
 # JAR files to test with
-jarfiles_base = [{'filename': 'sb_jparest_hikari_jdbc-0.0.1-SNAPSHOT', 'description': 'Spring Boot JPA REST JDBC',
-                  'driver': 'jdbc', 'pool': 'hikari', 'servlet_engine': 'tomcat', 'framework': 'JPA Data REST',
-                  'asyncservice': 'no', 'pool_used': 'yes', 'asyncdriver': 'no'},
-                 {'filename': 'sb_jpa_hikari_jdbc-0.0.1-SNAPSHOT', 'description': 'Spring Boot JPA JDBC',
+jarfiles = [     {'filename': 'sb_jpa_hikari_jdbc-0.0.1-SNAPSHOT.jar', 'description': 'Spring Boot JPA JDBC',
                   'driver': 'jdbc', 'pool': 'hikari', 'servlet_engine': 'tomcat', 'framework': 'Spring Boot Data',
                   'asyncservice': 'no', 'pool_used': 'yes', 'asyncdriver': 'no'},
-                 {'filename': 'sb_webflux_nopool_r2dbc-0.0.1-SNAPSHOT',
-                  'description': 'Spring Boot WebFlux No pool R2DBC', 'driver': 'r2dbc', 'pool': 'none',
-                  'servlet_engine': 'netty', 'framework': 'Spring Boot Data', 'asyncservice': 'yes', 'pool_used': 'no',
-                  'asyncdriver': 'yes'},
-                 {'filename': 'jaxrsrxjava_jpa_hikari_jdbc-0.0.1-SNAPSHOT',
-                  'description': 'JAX-RS RxJava JPA JDBC', 'driver': 'jdbc', 'pool': 'hikari',
-                  'servlet_engine': 'tomcat', 'framework': 'RxJava', 'asyncservice': 'yes', 'pool_used': 'yes',
-                  'asyncdriver': 'no'},
-                 {'filename': 'qs_resteasy_r2dbcpool_r2dbc-1.0-SNAPSHOT',
-                  'description': 'Quarkus RestEasy R2DBC', 'driver': 'r2dbc', 'pool': 'r2dbc',
-                  'servlet_engine': 'resteasy', 'framework': 'Quarkus RestEasy', 'asyncservice': 'yes',
-                  'pool_used': 'yes',
-                  'asyncdriver': 'yes'},
-                 {'filename': 'qs_resteasy_agroalpool_jdbc-1.0-SNAPSHOT',
-                  'description': 'Quarkus RestEasy JDBC', 'driver': 'jdbc', 'pool': 'agroal',
-                  'servlet_engine': 'resteasy', 'framework': 'Quarkus RestEasy', 'asyncservice': 'no',
-                  'pool_used': 'yes',
-                  'asyncdriver': 'no'},
-                 {'filename': 'sb_webflux_r2dbcpool_r2dbc-0.0.1-SNAPSHOT',
+                 {'filename': 'sb_webflux_r2dbcpool_r2dbc-0.0.1-SNAPSHOT.jar',
                   'description': 'Spring Boot WebFlux R2DBC pool R2DBC', 'driver': 'r2dbc', 'pool': 'r2dbc',
                   'servlet_engine': 'netty', 'framework': 'Spring Boot Data', 'asyncservice': 'yes', 'pool_used': 'yes',
-                  'asyncdriver': 'yes'}]
-
-jarfiles = []
-for jarfile in jarfiles_base:
-    for pool in pool_conf:
-        tmpjar = copy.deepcopy(jarfile)
-        tmpjar["filename"] = jarfile["filename"] + "_" + str(pool) + ".jar"
-        tmpjar["poolsize"] = str(pool)
-        jarfiles.append(tmpjar)
+                  'asyncdriver': 'yes'},
+                 {'filename': 'sb_jpa_r2dbcpool_r2dbc-0.0.1-SNAPSHOT.jar', 'description': 'Spring Boot JPA JDBC',
+                  'driver': 'jdbc', 'pool': 'hikari', 'servlet_engine': 'tomcat', 'framework': 'Spring Boot Data',
+                  'asyncservice': 'no', 'pool_used': 'yes', 'asyncdriver': 'yes'},
+                 {'filename': 'sb_webflux_jpa_hikari_jdbc-0.0.1-SNAPSHOT.jar',
+                  'description': 'Spring Boot WebFlux R2DBC pool R2DBC', 'driver': 'r2dbc', 'pool': 'r2dbc',
+                  'servlet_engine': 'netty', 'framework': 'Spring Boot Data', 'asyncservice': 'no', 'pool_used': 'yes',
+                  'asyncdriver': 'no'}]
 
 def check_prereqs():
     resval = True;
@@ -141,7 +118,7 @@ def exec_all_tests():
     # write header
     with open(resultsfile, 'a') as the_file:
         the_file.write(
-            'description,driver,asyncservice,pool_used,asyncdriver,servlet_engine,framework,cpus_load,cpus_service,concurrency,poolsize,lat_avg,lat_stdev,lat_max,req_avg,req_stdev,req_max,tot_requests,tot_duration,read,err_connect,err_read,err_write,err_timeout,req_sec_tot,read_tot,user_cpu,kern_cpu,user_child_cpu,kern_child_cpu,mem_kb_uss,cpu,mem_kb_pss,mem_kb_rss,duration\n')
+            'description,driver,asyncservice,pool_used,asyncdriver,servlet_engine,framework,cpus_load,cpus_service,concurrency,lat_avg,lat_stdev,lat_max,req_avg,req_stdev,req_max,tot_requests,tot_duration,read,err_connect,err_read,err_write,err_timeout,req_sec_tot,read_tot,user_cpu,kern_cpu,user_child_cpu,kern_child_cpu,mem_kb_uss,cpu,mem_kb_pss,mem_kb_rss,duration\n')
     for jarfile in jarfiles:
         jvmcmd = build_jvmcmd(jarfile.get('filename'));
         logger.info('Processing command: ' + jvmcmd)
@@ -163,7 +140,7 @@ def exec_all_tests():
                     jvm_outputline = jarfile.get('description') + ',' + jarfile.get('driver') + ',' + jarfile.get(
                         'asyncservice') + ',' + jarfile.get('pool_used') + ',' + jarfile.get(
                         'asyncdriver') + ',' + jarfile.get('servlet_engine') + ',' + jarfile.get(
-                        'framework') + ',' + cpunum_load + ',' + cpunum_service + ',' + concurrency + ',' + jarfile.get('poolsize')
+                        'framework') + ',' + cpunum_load + ',' + cpunum_service + ',' + concurrency
                     logger.info('Number of concurrent requests ' + concurrency)
 
                     pid = start_java_process(jvmcmd, cpuset_service)
