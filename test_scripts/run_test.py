@@ -126,7 +126,7 @@ def exec_all_tests():
     # write header
     with open(resultsfile, 'a') as the_file:
         the_file.write(
-            'description,asyncservice,asyncdriver,cpus_load,cpus_service,concurrency,lat_avg,lat_stdev,lat_max,req_avg,req_stdev,req_max,tot_requests,tot_duration,read,err_connect,err_read,err_write,err_timeout,req_sec_tot,read_tot,user_cpu,kern_cpu,user_child_cpu,kern_child_cpu,mem_kb_uss,mem_kb_pss,mem_kb_rss,duration\n')
+            'description,asyncservice,asyncdriver,cpus_load,cpus_service,concurrency,lat_avg,lat_stdev,lat_max,req_avg,req_stdev,req_max,tot_requests,tot_duration,read,err_connect,err_read,err_write,err_timeout,req_sec_tot,read_tot,user_cpu,kern_cpu,user_child_cpu,kern_child_cpu,mem_kb_uss,mem_kb_pss,mem_kb_rss,contextswitches,duration\n')
     for jarfile in jarfiles:
         jvmcmd = build_jvmcmd(jarfile.get('filename'));
         logger.info('Processing command: ' + jvmcmd)
