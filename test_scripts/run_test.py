@@ -14,7 +14,7 @@ wait_after_primer = 1
 wait_to_start = 10
 wait_after_kill = 2
 now = datetime.now()
-javacmd = '/usr/lib/jvm/java-11-openjdk-amd64/bin/java'
+javacmd = '/usr/lib/jvm/java-11-openjdk-amd64/bin/java -Xmx2g -Xms2g'
 wrkcmd = '/home/maarten/projects/wrk/wrk'
 wrktimeout = '20s'
 
@@ -42,7 +42,7 @@ logger.addHandler(fh)
 
 cpuset_conf1 = ['3,5,7,9']
 cpuset_conf2 = ['2,4,6,8']
-concurrency_conf = ['4','50','100','150','200','250','300','350','400','450','500']
+concurrency_conf = ['4','50','100','150','200','250','300','350','400','450','500','600','700','800','900','1000']
 
 # JAR files to test with
 jarfiles = [     {'filename': 'sb_jpa_hikari_jdbc-0.0.1-SNAPSHOT.jar',
@@ -75,7 +75,7 @@ def build_jvmcmd(jar):
 
 
 def get_cpuusage(pid):
-    cmd = 'cat /proc/' + pid + '/stat | cut -d \' \' -f 14-17'
+    cmd = 'cat /proc/' + pid + '/stat | cut -d \' \' -f 14-15'
     output = (subprocess.getoutput(cmd)).replace(' ', ',')
     return ',' + output
 
@@ -126,7 +126,7 @@ def exec_all_tests():
     # write header
     with open(resultsfile, 'a') as the_file:
         the_file.write(
-            'description,asyncservice,asyncdriver,cpus_load,cpus_service,concurrency,lat_avg,lat_stdev,lat_max,req_avg,req_stdev,req_max,tot_requests,tot_duration,read,err_connect,err_read,err_write,err_timeout,req_sec_tot,read_tot,user_cpu,kern_cpu,user_child_cpu,kern_child_cpu,mem_kb_uss,mem_kb_pss,mem_kb_rss,contextswitches,duration\n')
+            'description,asyncservice,asyncdriver,cpus_load,cpus_service,concurrency,lat_avg,lat_stdev,lat_max,req_avg,req_stdev,req_max,tot_requests,tot_duration,read,err_connect,err_read,err_write,err_timeout,req_sec_tot,read_tot,user_cpu,kern_cpu,mem_kb_uss,mem_kb_pss,mem_kb_rss,duration\n')
     for jarfile in jarfiles:
         jvmcmd = build_jvmcmd(jarfile.get('filename'));
         logger.info('Processing command: ' + jvmcmd)
@@ -167,7 +167,7 @@ def exec_all_tests():
                         logger.debug("wrk_output: " + str(wrk_output))
                         if str(wrk_output.get('read_tot')) == '0.0':
                             raise Exception('No bytes read. Test failed')
-                        cpu_and_mem =  get_cpuusage(pid) + get_mem_kb_uss(pid) + get_mem_kb_pss(pid) + get_mem_kb_rss(pid) + get_contextswitches(pid)
+                        cpu_and_mem =  get_cpuusage(pid) + get_mem_kb_uss(pid) + get_mem_kb_pss(pid) + get_mem_kb_rss(pid)
                         logger.info('CPU and memory: ' + cpu_and_mem)
                         outputline = jvm_outputline + wrk_data(wrk_output) + cpu_and_mem
                     except:
@@ -182,7 +182,7 @@ def exec_all_tests():
                             logger.debug("wrk_output: " + str(wrk_output))
                             if str(wrk_output.get('read_tot')) == '0.0':
                                 raise Exception('No bytes read. Test failed')
-                            cpu_and_mem = get_cpuusage(pid) + get_mem_kb_uss(pid) + get_mem_kb_pss(pid) + get_mem_kb_rss(pid) + get_contextswitches(pid)
+                            cpu_and_mem = get_cpuusage(pid) + get_mem_kb_uss(pid) + get_mem_kb_pss(pid) + get_mem_kb_rss(pid)
                             logger.info('CPU and memory: ' + cpu_and_mem)
                             outputline = jvm_outputline + wrk_data(wrk_output) + cpu_and_mem
                         except Exception as inst:
@@ -208,7 +208,7 @@ def wrk_data(wrk_output):
 
 
 def wrk_data_failed():
-    return ',FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED';
+    return ',FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED';
 
 
 def get_bytes(size_str):
