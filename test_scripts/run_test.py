@@ -46,19 +46,19 @@ concurrency_conf = ['4','50','100','150','200','250','300','350','400','450','50
 
 # JAR files to test with
 jarfiles = [     {'filename': 'sb_jpa_hikari_jdbc-0.0.1-SNAPSHOT.jar',
-                  'description': 'Spring Boot JDBC',
+                  'description': 'Web MVC JDBC',
                   'asyncservice': 'no',
                   'asyncdriver': 'no'},
                  {'filename': 'sb_webflux_r2dbcpool_r2dbc-0.0.1-SNAPSHOT.jar',
-                  'description': 'Spring Boot WebFlux R2DBC',
+                  'description': 'WebFlux R2DBC',
                   'asyncservice': 'yes',
                   'asyncdriver': 'yes'},
                  {'filename': 'sb_jpa_r2dbcpool_r2dbc-0.0.1-SNAPSHOT.jar',
-                  'description': 'Spring Boot R2DBC',
+                  'description': 'Web MVC R2DBC',
                   'asyncservice': 'no',
                   'asyncdriver': 'yes'},
                  {'filename': 'sb_webflux_jpa_hikari_jdbc-0.0.1-SNAPSHOT.jar',
-                  'description': 'Spring Boot WebFlux JDBC',
+                  'description': 'WebFlux JDBC',
                   'asyncservice': 'yes',
                   'asyncdriver': 'no'}]
 
@@ -74,10 +74,16 @@ def build_jvmcmd(jar):
     return javacmd + ' ' + '-jar ' + jar
 
 
-def get_cpuusage(pid):
-    cmd = 'cat /proc/' + pid + '/stat | cut -d \' \' -f 14-15'
+def get_user_cpuusage(pid):
+    cmd = 'cat /proc/' + pid + '/stat | cut -d \' \' -f 14'
     output = (subprocess.getoutput(cmd)).replace(' ', ',')
-    return ',' + output
+    return output
+
+
+def get_kern_cpuusage(pid):
+    cmd = 'cat /proc/' + pid + '/stat | cut -d \' \' -f 15'
+    output = (subprocess.getoutput(cmd)).replace(' ', ',')
+    return output
 
 
 def get_contextswitches(pid):
@@ -162,12 +168,16 @@ def exec_all_tests():
                     try:
                         output_primer = execute_test_single(cpuset_load, cpunum_load, concurrency, primer_duration)
                         time.sleep(wait_after_primer)
+                        cpu_user_before=get_user_cpuusage(pid)
+                        cpu_kern_before=get_kern_cpuusage(pid)
                         output_test = execute_test_single(cpuset_load, cpunum_load, concurrency, test_duration)
+                        cpu_user_after=get_user_cpuusage(pid)
+                        cpu_kern_after=get_kern_cpuusage(pid)
                         wrk_output = parse_wrk_output(output_test)
                         logger.debug("wrk_output: " + str(wrk_output))
                         if str(wrk_output.get('read_tot')) == '0.0':
                             raise Exception('No bytes read. Test failed')
-                        cpu_and_mem =  get_cpuusage(pid) + get_mem_kb_uss(pid) + get_mem_kb_pss(pid) + get_mem_kb_rss(pid)
+                        cpu_and_mem =  ',' + str(int(int(cpu_user_after)-int(cpu_user_before))) + ',' + str(int(int(cpu_kern_after)-int(cpu_kern_before))) + get_mem_kb_uss(pid) + get_mem_kb_pss(pid) + get_mem_kb_rss(pid)
                         logger.info('CPU and memory: ' + cpu_and_mem)
                         outputline = jvm_outputline + wrk_data(wrk_output) + cpu_and_mem
                     except:
@@ -177,12 +187,16 @@ def exec_all_tests():
                         try:
                             output_primer = execute_test_single(cpuset_load, cpunum_load, concurrency, primer_duration)
                             time.sleep(wait_after_primer)
+                            cpu_user_before=get_user_cpuusage(pid)
+                            cpu_kern_before=get_kern_cpuusage(pid)
                             output_test = execute_test_single(cpuset_load, cpunum_load, concurrency, test_duration)
+                            cpu_user_after=get_user_cpuusage(pid)
+                            cpu_kern_after=get_kern_cpuusage(pid)
                             wrk_output = parse_wrk_output(output_test)
                             logger.debug("wrk_output: " + str(wrk_output))
                             if str(wrk_output.get('read_tot')) == '0.0':
                                 raise Exception('No bytes read. Test failed')
-                            cpu_and_mem = get_cpuusage(pid) + get_mem_kb_uss(pid) + get_mem_kb_pss(pid) + get_mem_kb_rss(pid)
+                            cpu_and_mem =  ',' + str(int(int(cpu_user_after)-int(cpu_user_before))) + ',' + str(int(int(cpu_kern_after)-int(cpu_kern_before))) + get_mem_kb_uss(pid) + get_mem_kb_pss(pid) + get_mem_kb_rss(pid)
                             logger.info('CPU and memory: ' + cpu_and_mem)
                             outputline = jvm_outputline + wrk_data(wrk_output) + cpu_and_mem
                         except Exception as inst:
