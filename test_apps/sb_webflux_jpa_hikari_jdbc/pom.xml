@@ -9,10 +9,10 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>nl.amis.smeetsm</groupId>
-	<artifactId>sb_jpa_hikari_jdbc</artifactId>
+	<artifactId>sb_webflux_jpa_hikari_jdbc</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>sb_jpa_hikari_jdbc</name>
-	<description>Spring Boot using JPA with REST</description>
+	<name>sb_webflux_jpa_hikari_jdbc</name>
+	<description>Spring Boot Webflux using JPA with REST</description>
 
 	<properties>
 		<java.version>11</java.version>
@@ -25,7 +25,7 @@
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-web</artifactId>
+			<artifactId>spring-boot-starter-webflux</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.postgresql</groupId>

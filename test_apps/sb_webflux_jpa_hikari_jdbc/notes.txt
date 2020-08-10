@@ -1,0 +1,2 @@
+Read: https://stackoverflow.com/questions/52480271/spring-webflux-jpa-reactive-repositories-are-not-supported-by-jpa
+JPA does not support reactive repositories. This example is similar to https://github.com/chang-chao/spring-webflux-reactive-jdbc-sample

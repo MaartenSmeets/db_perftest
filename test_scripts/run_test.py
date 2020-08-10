@@ -9,12 +9,12 @@ import copy
 from datetime import datetime
 
 test_duration = 60
-primer_duration = 1
+primer_duration = 2
 wait_after_primer = 1
 wait_to_start = 10
 wait_after_kill = 2
 now = datetime.now()
-javacmd = '/usr/lib/jvm/java-11-openjdk-amd64/bin/java'
+javacmd = '/usr/lib/jvm/java-11-openjdk-amd64/bin/java -Xmx2g -Xms2g'
 wrkcmd = '/home/maarten/projects/wrk/wrk'
 wrktimeout = '20s'
 
@@ -40,48 +40,27 @@ fh.setFormatter(formatter)
 logger.addHandler(ch)
 logger.addHandler(fh)
 
-cpuset_conf1 = ['3', '3,5', '3,5,7,9']
-cpuset_conf2 = ['2', '2,4', '2,4,6,8']
-pool_conf = ['5', '20', '100']
-concurrency_conf = ['1', '2', '4', '10', '25', '50', '75', '100']
+cpuset_conf1 = ['3,5,7,9']
+cpuset_conf2 = ['2,4,6,8']
+concurrency_conf = ['4','50','100','150','200','250','300','350','400','450','500','600','700','800','900','1000']
 
 # JAR files to test with
-jarfiles_base = [{'filename': 'sb_jparest_hikari_jdbc-0.0.1-SNAPSHOT', 'description': 'Spring Boot JPA REST JDBC',
-                  'driver': 'jdbc', 'pool': 'hikari', 'servlet_engine': 'tomcat', 'framework': 'JPA Data REST',
-                  'asyncservice': 'no', 'pool_used': 'yes', 'asyncdriver': 'no'},
-                 {'filename': 'sb_jpa_hikari_jdbc-0.0.1-SNAPSHOT', 'description': 'Spring Boot JPA JDBC',
-                  'driver': 'jdbc', 'pool': 'hikari', 'servlet_engine': 'tomcat', 'framework': 'Spring Boot Data',
-                  'asyncservice': 'no', 'pool_used': 'yes', 'asyncdriver': 'no'},
-                 {'filename': 'sb_webflux_nopool_r2dbc-0.0.1-SNAPSHOT',
-                  'description': 'Spring Boot WebFlux No pool R2DBC', 'driver': 'r2dbc', 'pool': 'none',
-                  'servlet_engine': 'netty', 'framework': 'Spring Boot Data', 'asyncservice': 'yes', 'pool_used': 'no',
-                  'asyncdriver': 'yes'},
-                 {'filename': 'jaxrsrxjava_jpa_hikari_jdbc-0.0.1-SNAPSHOT',
-                  'description': 'JAX-RS RxJava JPA JDBC', 'driver': 'jdbc', 'pool': 'hikari',
-                  'servlet_engine': 'tomcat', 'framework': 'RxJava', 'asyncservice': 'yes', 'pool_used': 'yes',
+jarfiles = [     {'filename': 'sb_jpa_hikari_jdbc-0.0.1-SNAPSHOT.jar',
+                  'description': 'Web MVC JDBC',
+                  'asyncservice': 'no',
                   'asyncdriver': 'no'},
-                 {'filename': 'qs_resteasy_r2dbcpool_r2dbc-1.0-SNAPSHOT',
-                  'description': 'Quarkus RestEasy R2DBC', 'driver': 'r2dbc', 'pool': 'r2dbc',
-                  'servlet_engine': 'resteasy', 'framework': 'Quarkus RestEasy', 'asyncservice': 'yes',
-                  'pool_used': 'yes',
+                 {'filename': 'sb_webflux_r2dbcpool_r2dbc-0.0.1-SNAPSHOT.jar',
+                  'description': 'WebFlux R2DBC',
+                  'asyncservice': 'yes',
                   'asyncdriver': 'yes'},
-                 {'filename': 'qs_resteasy_agroalpool_jdbc-1.0-SNAPSHOT',
-                  'description': 'Quarkus RestEasy JDBC', 'driver': 'jdbc', 'pool': 'agroal',
-                  'servlet_engine': 'resteasy', 'framework': 'Quarkus RestEasy', 'asyncservice': 'no',
-                  'pool_used': 'yes',
-                  'asyncdriver': 'no'},
-                 {'filename': 'sb_webflux_r2dbcpool_r2dbc-0.0.1-SNAPSHOT',
-                  'description': 'Spring Boot WebFlux R2DBC pool R2DBC', 'driver': 'r2dbc', 'pool': 'r2dbc',
-                  'servlet_engine': 'netty', 'framework': 'Spring Boot Data', 'asyncservice': 'yes', 'pool_used': 'yes',
-                  'asyncdriver': 'yes'}]
-
-jarfiles = []
-for jarfile in jarfiles_base:
-    for pool in pool_conf:
-        tmpjar = copy.deepcopy(jarfile)
-        tmpjar["filename"] = jarfile["filename"] + "_" + str(pool) + ".jar"
-        tmpjar["poolsize"] = str(pool)
-        jarfiles.append(tmpjar)
+                 {'filename': 'sb_jpa_r2dbcpool_r2dbc-0.0.1-SNAPSHOT.jar',
+                  'description': 'Web MVC R2DBC',
+                  'asyncservice': 'no',
+                  'asyncdriver': 'yes'},
+                 {'filename': 'sb_webflux_jpa_hikari_jdbc-0.0.1-SNAPSHOT.jar',
+                  'description': 'WebFlux JDBC',
+                  'asyncservice': 'yes',
+                  'asyncdriver': 'no'}]
 
 def check_prereqs():
     resval = True;
@@ -95,8 +74,20 @@ def build_jvmcmd(jar):
     return javacmd + ' ' + '-jar ' + jar
 
 
-def get_cpuusage(pid):
-    cmd = 'cat /proc/' + pid + '/stat | cut -d \' \' -f 14-17'
+def get_user_cpuusage(pid):
+    cmd = 'cat /proc/' + pid + '/stat | cut -d \' \' -f 14'
+    output = (subprocess.getoutput(cmd)).replace(' ', ',')
+    return output
+
+
+def get_kern_cpuusage(pid):
+    cmd = 'cat /proc/' + pid + '/stat | cut -d \' \' -f 15'
+    output = (subprocess.getoutput(cmd)).replace(' ', ',')
+    return output
+
+
+def get_contextswitches(pid):
+    cmd = 'grep ctxt /proc/' + pid + '/status | awk \'{ print $2 }\' | awk \'{s+=$1} END {print s}\''
     output = (subprocess.getoutput(cmd)).replace(' ', ',')
     return ',' + output
 
@@ -141,7 +132,7 @@ def exec_all_tests():
     # write header
     with open(resultsfile, 'a') as the_file:
         the_file.write(
-            'description,driver,asyncservice,pool_used,asyncdriver,servlet_engine,framework,cpus_load,cpus_service,concurrency,poolsize,lat_avg,lat_stdev,lat_max,req_avg,req_stdev,req_max,tot_requests,tot_duration,read,err_connect,err_read,err_write,err_timeout,req_sec_tot,read_tot,user_cpu,kern_cpu,user_child_cpu,kern_child_cpu,mem_kb_uss,cpu,mem_kb_pss,mem_kb_rss,duration\n')
+            'description,asyncservice,asyncdriver,cpus_load,cpus_service,concurrency,lat_avg,lat_stdev,lat_max,req_avg,req_stdev,req_max,tot_requests,tot_duration,read,err_connect,err_read,err_write,err_timeout,req_sec_tot,read_tot,user_cpu,kern_cpu,mem_kb_uss,mem_kb_pss,mem_kb_rss,duration\n')
     for jarfile in jarfiles:
         jvmcmd = build_jvmcmd(jarfile.get('filename'));
         logger.info('Processing command: ' + jvmcmd)
@@ -160,10 +151,7 @@ def exec_all_tests():
                 logger.info('Number of CPUs for service ' + cpunum_service)
                 # concurrency_local is a selection of all the concurrency options. concurrency has to be >= threads/cores for wrk
                 for concurrency in concurrency_local:
-                    jvm_outputline = jarfile.get('description') + ',' + jarfile.get('driver') + ',' + jarfile.get(
-                        'asyncservice') + ',' + jarfile.get('pool_used') + ',' + jarfile.get(
-                        'asyncdriver') + ',' + jarfile.get('servlet_engine') + ',' + jarfile.get(
-                        'framework') + ',' + cpunum_load + ',' + cpunum_service + ',' + concurrency + ',' + jarfile.get('poolsize')
+                    jvm_outputline = jarfile.get('description') + ',' + jarfile.get('asyncservice') + ',' + jarfile.get('asyncdriver') + ',' + cpunum_load + ',' + cpunum_service + ',' + concurrency
                     logger.info('Number of concurrent requests ' + concurrency)
 
                     pid = start_java_process(jvmcmd, cpuset_service)
@@ -180,12 +168,16 @@ def exec_all_tests():
                     try:
                         output_primer = execute_test_single(cpuset_load, cpunum_load, concurrency, primer_duration)
                         time.sleep(wait_after_primer)
+                        cpu_user_before=get_user_cpuusage(pid)
+                        cpu_kern_before=get_kern_cpuusage(pid)
                         output_test = execute_test_single(cpuset_load, cpunum_load, concurrency, test_duration)
+                        cpu_user_after=get_user_cpuusage(pid)
+                        cpu_kern_after=get_kern_cpuusage(pid)
                         wrk_output = parse_wrk_output(output_test)
                         logger.debug("wrk_output: " + str(wrk_output))
                         if str(wrk_output.get('read_tot')) == '0.0':
                             raise Exception('No bytes read. Test failed')
-                        cpu_and_mem =  get_cpuusage(pid) + get_mem_kb_uss(pid) + get_mem_kb_pss(pid) + get_mem_kb_rss(pid)
+                        cpu_and_mem =  ',' + str(int(int(cpu_user_after)-int(cpu_user_before))) + ',' + str(int(int(cpu_kern_after)-int(cpu_kern_before))) + get_mem_kb_uss(pid) + get_mem_kb_pss(pid) + get_mem_kb_rss(pid)
                         logger.info('CPU and memory: ' + cpu_and_mem)
                         outputline = jvm_outputline + wrk_data(wrk_output) + cpu_and_mem
                     except:
@@ -195,12 +187,16 @@ def exec_all_tests():
                         try:
                             output_primer = execute_test_single(cpuset_load, cpunum_load, concurrency, primer_duration)
                             time.sleep(wait_after_primer)
+                            cpu_user_before=get_user_cpuusage(pid)
+                            cpu_kern_before=get_kern_cpuusage(pid)
                             output_test = execute_test_single(cpuset_load, cpunum_load, concurrency, test_duration)
+                            cpu_user_after=get_user_cpuusage(pid)
+                            cpu_kern_after=get_kern_cpuusage(pid)
                             wrk_output = parse_wrk_output(output_test)
                             logger.debug("wrk_output: " + str(wrk_output))
                             if str(wrk_output.get('read_tot')) == '0.0':
                                 raise Exception('No bytes read. Test failed')
-                            cpu_and_mem = get_cpuusage(pid) + get_mem_kb_uss(pid) + get_mem_kb_pss(pid) + get_mem_kb_rss(pid)
+                            cpu_and_mem =  ',' + str(int(int(cpu_user_after)-int(cpu_user_before))) + ',' + str(int(int(cpu_kern_after)-int(cpu_kern_before))) + get_mem_kb_uss(pid) + get_mem_kb_pss(pid) + get_mem_kb_rss(pid)
                             logger.info('CPU and memory: ' + cpu_and_mem)
                             outputline = jvm_outputline + wrk_data(wrk_output) + cpu_and_mem
                         except Exception as inst:
@@ -226,7 +222,7 @@ def wrk_data(wrk_output):
 
 
 def wrk_data_failed():
-    return ',FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED';
+    return ',FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED,FAILED';
 
 
 def get_bytes(size_str):
